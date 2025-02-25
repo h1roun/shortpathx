@@ -15,19 +15,24 @@ app = Flask(__name__)
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 # Initialize geocoder
-geolocator = Nominatim(user_agent="algeria_router")
+geolocator = Nominatim(user_agent="bejaia_router")
 
-# Load Algeria graph once at startup
-algeria_graph = None
-try:
-    algeria_graph = ox.load_graphml('algeria_graph.graphml')
-except:
-    print("Downloading Algeria network data, this may take some time...")
-    algeria_graph = ox.graph_from_place('Algeria', network_type='drive')
-    ox.save_graphml(algeria_graph, 'algeria_graph.graphml')
-
-# Default coordinates for Bejaia
+# Bejaia coordinates and settings
 BEJAIA_COORDS = (36.7528, 5.0567)
+BEJAIA_RADIUS = 30000  # 30km radius around Bejaia
+
+# Load Bejaia graph once at startup
+bejaia_graph = None
+try:
+    bejaia_graph = ox.load_graphml('bejaia_graph.graphml')
+except:
+    print("Downloading Bejaia network data...")
+    bejaia_graph = ox.graph_from_point(
+        center_point=BEJAIA_COORDS,
+        dist=BEJAIA_RADIUS,
+        network_type='drive'
+    )
+    ox.save_graphml(bejaia_graph, 'bejaia_graph.graphml')
 
 @app.route('/')
 def index():
@@ -44,36 +49,36 @@ def get_route():
     
     try:
         # Geocode origin and destination
-        origin_location = geolocator.geocode(origin)
-        dest_location = geolocator.geocode(f"{destination}, Algeria")
+        origin_location = geolocator.geocode(f"{origin}, Bejaia, Algeria")
+        dest_location = geolocator.geocode(f"{destination}, Bejaia, Algeria")
         
         if not origin_location or not dest_location:
-            return jsonify({"error": "Could not geocode one of the locations"}), 400
+            return jsonify({"error": "Location must be within Bejaia region"}), 400
         
         origin_point = (origin_location.latitude, origin_location.longitude)
         dest_point = (dest_location.latitude, dest_location.longitude)
         
         # Find nearest network nodes
-        origin_node = ox.distance.nearest_nodes(algeria_graph, origin_point[1], origin_point[0])
-        dest_node = ox.distance.nearest_nodes(algeria_graph, dest_point[1], dest_point[0])
+        origin_node = ox.distance.nearest_nodes(bejaia_graph, origin_point[1], origin_point[0])
+        dest_node = ox.distance.nearest_nodes(bejaia_graph, dest_point[1], dest_point[0])
         
         # Calculate shortest path
-        route = nx.shortest_path(algeria_graph, origin_node, dest_node, weight='length')
+        route = nx.shortest_path(bejaia_graph, origin_node, dest_node, weight='length')
         
         # Get route coordinates
         route_coords = []
         for node in route:
-            y = algeria_graph.nodes[node]['y']
-            x = algeria_graph.nodes[node]['x']
+            y = bejaia_graph.nodes[node]['y']
+            x = bejaia_graph.nodes[node]['x']
             route_coords.append([y, x])
         
         # Calculate route stats
-        route_length = int(ox.utils_graph.get_route_edge_attributes(algeria_graph, route, 'length').sum())
+        route_length = int(ox.utils_graph.get_route_edge_attributes(bejaia_graph, route, 'length').sum())
         
         # Create a map
-        m = folium.Map(location=[origin_point[0], origin_point[1]], zoom_start=7)
+        m = folium.Map(location=BEJAIA_COORDS, zoom_start=11)
         
-        # Add markers for origin and destination
+        # Add markers
         folium.Marker(
             origin_point, 
             popup=origin, 
@@ -117,16 +122,16 @@ def get_route():
 
 @app.route('/popular_destinations')
 def popular_destinations():
-    # Some popular destinations in Algeria
+    # Popular destinations in Bejaia region
     destinations = [
-        {"name": "Algiers", "description": "The capital city of Algeria"},
-        {"name": "Oran", "description": "Major port city in the northwest"},
-        {"name": "Constantine", "description": "City of bridges in northeastern Algeria"},
-        {"name": "Annaba", "description": "Coastal city in northeastern Algeria"},
-        {"name": "Tlemcen", "description": "City in northwestern Algeria"},
-        {"name": "Ghardaïa", "description": "City in central northern Algeria"},
-        {"name": "Sétif", "description": "City in northeastern Algeria"},
-        {"name": "Tamanrasset", "description": "Major city in southern Algeria"}
+        {"name": "Amizour", "description": "Commune in Bejaia Province"},
+        {"name": "Tichy", "description": "Coastal town in Bejaia"},
+        {"name": "Aokas", "description": "Seaside town in Bejaia"},
+        {"name": "Souk El Tenine", "description": "Town in Bejaia Province"},
+        {"name": "Bejaia Port", "description": "Main port of Bejaia"},
+        {"name": "Bejaia Airport", "description": "Soummam - Abane Ramdane Airport"},
+        {"name": "Toudja", "description": "Mountain commune known for honey"},
+        {"name": "Oued Ghir", "description": "Commune in Bejaia Province"}
     ]
     return jsonify(destinations)
 

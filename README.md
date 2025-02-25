@@ -1,14 +1,14 @@
-# Algeria Router
+# Bejaia Router
 
-A smart routing application for navigating across Algeria, with special focus on routes from Bejaia to other destinations.
+A smart routing application for navigating within the Bejaia region, with special focus on routes between popular destinations like Amizour, Tichy, and other communes.
 
 ## Features
 
-- Interactive map visualization using Folium and OpenStreetMap data
+- Interactive map visualization focusing on Bejaia region
 - Smart route finding using OSMnx and NetworkX
 - Beautiful UI with Bulma CSS framework
-- Search for routes between any two locations in Algeria
-- Quick access to popular destinations
+- Search for routes between any two locations in Bejaia
+- Quick access to popular destinations in the region
 - Distance calculation and route optimization
 
 ## Installation
@@ -39,7 +39,7 @@ python app.py
 
 ## First Run Notice
 
-On first run, the application will download the road network data for Algeria, which may take some time depending on your internet connection. This data will be cached for subsequent runs.
+On first run, the application will download the road network data for the Bejaia region (30km radius), which should only take a few moments. This data will be cached for subsequent runs.
 
 ## Screenshots
 
